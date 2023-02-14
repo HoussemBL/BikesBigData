@@ -14,7 +14,7 @@ import java.util.Properties
 import scala.io.Source
 import Utils.Utils
 
-object CollectLOGS {
+object QueryBikes {
   def main(args: Array[String]): Unit = {
 
  val spark:SparkSession = Utils.getSpark()
@@ -27,13 +27,14 @@ object CollectLOGS {
     //reading stream of logs
     val dfCSV = spark.readStream.option("sep", " ")
       .option("header", "false")
-      .schema(Kafka.getschema())
+      .schema(Kafka.schemaBikeInfo)
        .csv(kafkaprameters.path_datasource)
    
      
-    
+    dfCSV.printSchema()
+    println("test")
     //writing in kafka topic
-     KafkaProducer.writelogs_topic(kafkaprameters.topic, kafkaprameters.timewindow,dfCSV)
+    // KafkaProducer.writelogs_topic(kafkaprameters.topic, kafkaprameters.timewindow,dfCSV)
     
     
     

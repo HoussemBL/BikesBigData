@@ -33,9 +33,10 @@ object Utils{
   def getKafkaParameters(): KafkaParameters={
     
     val   Kafka_parameters=Kafka.readKafkaProperties()    
-val kafka_topic=Kafka_parameters.getProperty("kafka_topic")
-val  timewindow=Kafka_parameters.getProperty("timewindow").toLong
-val path_datasource=Kafka_parameters.getProperty("path_datasource")
+   val kafka_topic=Kafka_parameters.getProperty("kafka_topic")
+   val  timewindow=Kafka_parameters.getProperty("timewindow").toLong
+   val path_datasource=Kafka_parameters.getProperty("path_datasource")
+    val url=Kafka_parameters.getProperty("url")
 
 
  //println("path used to produce kafka --> "+ path_datasource)
@@ -43,7 +44,7 @@ val path_datasource=Kafka_parameters.getProperty("path_datasource")
     println("Interval of batch in seconds --> "+  timewindow)   
      Thread.sleep(3000)
 
-  val param= KafkaParameters(path_datasource,kafka_topic,timewindow)
+  val param= KafkaParameters(path_datasource,kafka_topic,timewindow,url)
   param
   }
   

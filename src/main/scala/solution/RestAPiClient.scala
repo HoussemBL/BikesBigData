@@ -12,6 +12,7 @@ import akka.stream.ActorMaterializer
 import akka.util.ByteString
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 
+
 import java.util.Properties
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -54,14 +55,15 @@ object RestApiClient {
     val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = url))
 
 
-    system.scheduler.schedule(0.minutes, 5.minutes) {
+    system.scheduler.schedule(0.seconds, 15.seconds) {
       callSearchBikeEndpoint(responseFuture)
     }
+
+
 
   }
 
   def sendToKafka(data: String,topic:String): Unit = {
-    //val topic = "bikes"
     val brokers = "localhost:9092"
     val properties = new Properties()
     properties.put("bootstrap.servers", brokers)
@@ -99,14 +101,14 @@ object RestApiClient {
                 //println(body.utf8String)
                 sendToKafka(bikes, "searchbikes")
 
-
+                println(body.utf8String)
                 callEnpointGetBikeById(bike_id)
               }
               case Failure(e) => {
                 println(s"Error occurred: ${e.getMessage}")
               }
             }
-            println(body.utf8String)
+
           }
 
 

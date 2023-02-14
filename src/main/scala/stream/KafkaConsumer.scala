@@ -4,7 +4,9 @@ import db._
 import org.apache.spark._
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.kafka010._
-import org.apache.spark.streaming.kafka010.KafkaUtils
+//import org.apache.spark.streaming.kafka010.KafkaUtils
+
+
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types._
@@ -22,28 +24,26 @@ case class KafkaConsumer(topic: String, timewindow: Long) extends Kafka
 object KafkaConsumer{
   
  // transform the data consumed from a kafka topic to a dataframe  using the specified schema
-  def convertStreamToDF(schema:StructType,df_st: DataFrame): DataFrame = {
-//    val personStringDF = df_st.selectExpr("CAST(value AS STRING)")
-//    val personDF = personStringDF.select(from_json(col("value"), schema).as("data"))
-//        .select(explode(col("data.results"))).as("results")
-//       .select("results.col.gender","results.col.nat")
-//   // .select("data.*")
-//    return personDF
-  val schema1 = new StructType()
-    .add("title", StringType, true)
-    .add("first", StringType, true)
-    .add("last", StringType, true)
+  def convertStreamToDF(schemas: List[StructType],df_st: DataFrame): DataFrame = {
+
     
-       val personStringDF = df_st.selectExpr("CAST(value AS STRING)")
-    val personDF = personStringDF.select(from_json(col("value"), schema).as("data"))
-    //.select("data.*")
-   // .select(col("nat"),col("gender"),from_json(col("name"), schema1).as("name"))
+    val bikesInfoRawDF = df_st.selectExpr("CAST(value AS STRING)")
+    val bikesInfoDF = bikesInfoRawDF.select(from_json(col("value"), schemas(0)).as("data"))
     .select("data.*")
-    return personDF
+     .select(from_json(col("bike"),schemas(1)).as("data"))
+      .select("data.*")
+
+
+
+ //     .select(explode(col("bike")).as("col"))
+   //   .select("col.date_stolen","col.description")
+    bikesInfoDF.printSchema()
+
+    return bikesInfoDF
   }
 
  //query the data stream available as dataframe
-  def queryStreamingDF(intervalBatchStr: String,df_out: DataFrame): StreamingQuery = {
+  def print_console_StreamingDF(intervalBatchStr: String, df_out: DataFrame): StreamingQuery = {
     val df = df_out.writeStream
       .format("console")
       .outputMode("append")
