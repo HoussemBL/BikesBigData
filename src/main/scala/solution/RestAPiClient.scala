@@ -64,7 +64,7 @@ object RestApiClient {
                person match {
                 case Success(output) => {
                   val bike_id = output.get("bikes").get(0).id.toString
-                  println(body.utf8String)
+                  //println(body.utf8String)
                   sendToKafka(bikes, "bikes")
 
 
@@ -78,8 +78,8 @@ object RestApiClient {
                       case Success(res) =>
                         res.entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
                           val bike_id_info = body.utf8String
-                          println(bike_id_info)
-                          sendToKafka(bikes, "bike_info")
+                         // println(bike_id_info)
+                          sendToKafka(bike_id_info, "bike_info")
 
                         }
                       case Failure(_) => sys.error("something went wrong when searching the bike " + bike_id)
