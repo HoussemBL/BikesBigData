@@ -4,7 +4,7 @@ package solution
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
@@ -14,12 +14,12 @@ import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 
 import java.util.Properties
 import com.google.gson.Gson
-import com.google.gson.internal.LinkedTreeMap
 import com.google.gson.reflect.TypeToken
 
+import java.util
 import java.util.Map
 import java.util.List
-
+import scala.collection.immutable.TreeMap
 
 
 
@@ -61,7 +61,7 @@ object RestApiClient {
     val url = "https://bikeindex.org/api/v3/search?page=1&per_page=1&location=address&stolenness=all"
 
     val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = url))
-
+    val gson = new Gson()
 
     system.scheduler.schedule(0.minutes, 5.minutes) {
       responseFuture
@@ -69,13 +69,22 @@ object RestApiClient {
           case Success(res) =>
             res.entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
               val bikes = body.utf8String
-              val gson = new Gson()
-             // val test= """{"bikes":[{"date_stolen":167635}]}"""
-              val mapType = new TypeToken[java.util.Map[String, java.util.List[BikeInfo]]] {}.getType
-              val person = gson.fromJson(body.utf8String,mapType).asInstanceOf[LinkedTreeMap]
+
+
+              val mapType = new TypeToken[java.util.HashMap[String, java.util.ArrayList[BikeInfo]]] {}.getType
+              val person = Try(gson.fromJson(body.utf8String,mapType).asInstanceOf[java.util.Map[String, java.util.ArrayList[BikeInfo]]])
+               person match {
+                case Success(output) => {
+                  println(body.utf8String)
+                  sendToKafka(bikes, "bikes")
+                }
+                case Failure(e) => {
+                  println(s"Error occurred: ${e.getMessage}")
+                }
+              }
               println(body.utf8String)
-              sendToKafka(bikes, "bikes")
             }
+
 
           case Failure(_) => sys.error("something went wrong")
         }
