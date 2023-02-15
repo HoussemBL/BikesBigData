@@ -23,9 +23,7 @@ import java.util.List
 import scala.collection.immutable.TreeMap
 
 
-
-
-//import scala.collection.mutable.ListBuffer
+import scala.collection.JavaConverters._
 
 case class BikeInfo(date_stolen:Long, description:String, frame_colors:List[String], frame_model:String,
                     id:Long, is_stock_img :Boolean, large_img: String, location_found:Boolean,
@@ -51,18 +49,14 @@ object RestApiClient {
 
   def main(args: Array[String]): Unit = {
     implicit val system = ActorSystem()
-    implicit val materializer = ActorMaterializer()
+    //implicit val materializer = ActorMaterializer()
     implicit val executionContext = system.dispatcher
 
 
 
-
-
-
-    //system.scheduler.schedule(0.seconds, 15.seconds) {
     while(true) {
       callSearchBikeEndpoint()
-      Thread.sleep(1 * 30 * 1000) // sleep for 5 minutes
+      Thread.sleep(5 * 60 * 1000) // sleep for 5 minutes
 
   }
 
@@ -70,27 +64,14 @@ object RestApiClient {
 
   }
 
-  /*def sendToKafka(data: String,topic:String): Unit = {
-    val brokers = "localhost:9092"
-    val properties = new Properties()
-    properties.put("bootstrap.servers", brokers)
-    properties.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
-    properties.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
-
-    val producer = new KafkaProducer[String, String](properties)
-
-    val record = new ProducerRecord[String, String](topic, data)
-    producer.send(record)
-    producer.close()
-  }*/
 
 
 
 //call first endpoint about searchingBike
   def callSearchBikeEndpoint()(implicit executionContext: ExecutionContext,
-  system : ActorSystem, materializer: ActorMaterializer) = {
-    val url = "https://bikeindex.org/api/v3/search?page=1&per_page=1&location=address&stolenness=all"
-
+  system : ActorSystem/*, materializer: ActorMaterializer*/) = {
+   // val url = "https://bikeindex.org/api/v3/search?page=1&per_page=1&location=address&stolenness=all"
+    val url ="https://bikeindex.org/api/v3/search?page=1&per_page=20&location=address&stolenness=stolen"
     val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = url))
     val gson = new Gson()
     responseFuture
@@ -104,15 +85,17 @@ object RestApiClient {
             val person = Try(gson.fromJson(body.utf8String, mapType).asInstanceOf[java.util.Map[String, java.util.ArrayList[BikeInfo]]])
             person match {
               case Success(output) => {
-                val bike_id = output.get("bikes").get(0).id.toString
-                //println(body.utf8String)
-                //sendToKafka(bikes, "searchbikes")
 
-                val record = new ProducerRecord[String, String]("searchbikes", bikes)
-                producer.send(record)
+
+                val list_bikes_id = output.get("bikes").asScala.map(bike=>bike.id.toString)
+                //val bike_id = output.get("bikes").get(0).id.toString
+
+                //val record = new ProducerRecord[String, String]("searchbikes", bikes)
+                //producer.send(record)
 
                 println(body.utf8String)
-                callEnpointGetBikeById(bike_id)
+                for (bike_id <- list_bikes_id)
+                  {callEnpointGetBikeById(bike_id)}
               }
               case Failure(e) => {
                 println(s"Error occurred: ${e.getMessage}")
@@ -126,7 +109,7 @@ object RestApiClient {
       }
   }
   def callEnpointGetBikeById(bike_id: String)(implicit executionContext: ExecutionContext,
-                                              system: ActorSystem, materializer: ActorMaterializer) = {
+                                              system: ActorSystem) = {
     //second end point
 
 
@@ -139,7 +122,7 @@ object RestApiClient {
           res.entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
             val bike_id_info = body.utf8String
             println(bike_id_info)
-           // sendToKafka(bike_id_info, "infobikes")
+
 
             val record = new ProducerRecord[String, String]("infobikes", bike_id_info)
             producer.send(record)

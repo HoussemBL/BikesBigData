@@ -40,7 +40,7 @@ import spark.implicits._
 
 
     //write in cassandra
-    df_out.writeStream
+    /*df_out.writeStream
       .trigger(Trigger.ProcessingTime(Kafka.convertTimeToString(kafkaprameters.timewindow)))
       .outputMode("update")
       .foreachBatch { (batchDF: DataFrame, batchId: Long) => KafkaConsumer.save_cassandra(batchDF) }
@@ -52,7 +52,7 @@ import spark.implicits._
       .outputMode("update")
       .foreachBatch { (batchDF: DataFrame, batchId: Long) => KafkaConsumer.save_mysql(batchDF, batchId) }
       .start()
-
+*/
     df_read.awaitTermination()
 
   }
