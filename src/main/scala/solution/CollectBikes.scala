@@ -32,19 +32,30 @@ import spark.implicits._
       .load()
 
 
-    val df_out = KafkaConsumer.convertStreamToDF(Kafka.schemas,df)(0)
 
 
+    val df_bikes= KafkaConsumer.convertStreamToDF(Kafka.schemas,df)
   //just use it for logging
+   // val df_out = KafkaConsumer.convertStreamToDF(Kafka.schemas,df)(0)
     //val df_read = KafkaConsumer.print_console_StreamingDF(Kafka.convertTimeToString(kafkaprameters.timewindow),df_out)
 
 
 
     //write in delta
-    val df_read= df_out.writeStream
+    val df_read= df_bikes.writeStream
       .trigger(Trigger.ProcessingTime(Kafka.convertTimeToString(kafkaprameters.timewindow)))
       .outputMode("append")
-      .foreachBatch { (batchDF: DataFrame, batchId: Long) => KafkaConsumer.save_delta(batchDF, batchId) }
+      .foreachBatch { (batchDF: DataFrame, batchId: Long) =>
+        KafkaConsumer.save_delta(batchDF, batchId,"file:/home/houssem/delta-bikes/bikes")
+
+        val dfStolenRecord= KafkaConsumer.extractRecordStolenDimensionTable(Kafka.schemas ,batchDF)
+        val dfComponents= KafkaConsumer.extractComponentsDimensionTable(Kafka.schemas ,batchDF)
+        val dfImages= KafkaConsumer.extractImagesDimensionTable(Kafka.schemas ,batchDF)
+
+        KafkaConsumer.save_delta(dfStolenRecord, batchId,"file:/home/houssem/delta-bikes/stolen-record")
+        KafkaConsumer.save_delta(dfComponents, batchId,"file:/home/houssem/delta-bikes/components")
+        KafkaConsumer.save_delta(dfImages, batchId,"file:/home/houssem/delta-bikes/images")
+      }
       .start()
 
     //write in cassandra

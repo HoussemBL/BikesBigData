@@ -1,17 +1,8 @@
 package solution
 
-import org.apache.spark._
-import org.apache.spark.streaming._
+
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.types._
-import org.apache.spark.sql._
-import org.apache.spark.sql.functions._
-import org.apache.spark.sql.streaming.Trigger
-import stream._
-import db._
-import java.io.FileInputStream
-import java.util.Properties
-import scala.io.Source
+import io.delta.tables._
 import Utils.Utils
 
 object QueryBikes {
@@ -19,21 +10,58 @@ object QueryBikes {
 
  val spark:SparkSession = Utils.getSpark()
 
-    val timeTravelDF_1 = spark.read.format("delta")
+
+
+
+   //retrieve history
+   val deltaTable = DeltaTable.forPath(spark, "file:/home/houssem/delta-bikes/bikes")
+
+    val fullHistoryDF = deltaTable.history() // get the full history of the table
+
+    fullHistoryDF.show(fullHistoryDF.count().toInt,false)
+
+
+    val lastOperationDF = deltaTable.history(1)
+    lastOperationDF.show(fullHistoryDF.count().toInt,false)
+
+    //check content of first dataframe
+    val timeTravelDF_0 = spark.read.format("delta")
       .option("versionAsOf", 0)
       .load("file:/home/houssem/delta-bikes/bikes")
+    timeTravelDF_0.show(5, false)
+
+
+    //check content of last dataframe
+    val timeTravelDF_1 = spark.read.format("delta")
+      .option("versionAsOf", 4)
+      .load("file:/home/houssem/delta-bikes/bikes")
     timeTravelDF_1.show(5, false)
-    
-    
-    
-    
-    
    
+  print("end")
 
+
+  
+ //query delta
+val df=spark.read.format("delta")
+  .load("file:/home/houssem/delta-bikes/bikes")
+
+  val numberofStolenBikes= df
+    .count()
+    println ("numberofStolenBikes " + numberofStolenBikes)
+
+    df.groupBy("type_of_cycle").count().show()
+/*
+* +-------------+-----+
+|type_of_cycle|count|
++-------------+-----+
+|         Bike|   28|
+| E-skateboard|    1|
+|     Tricycle|    1|
+|    Recumbent|    2|
++-------------+-----+
+* */
+
+   df.groupBy("year").count().show()
   }
-  
 
-  
- 
-  
 }
