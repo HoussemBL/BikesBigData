@@ -18,7 +18,6 @@ object QueryTableBikes {
     fullHistoryDF.show(fullHistoryDF.count().toInt, false)
 
     //update data
-    //spark.sql("update bikes set frame_model='XXX' where id=1462668")
     deltaTable.update( // predicate using Spark SQL functions and implicits
       col("id") === 1462668L,
       Map("frame_model" -> lit("click1")))

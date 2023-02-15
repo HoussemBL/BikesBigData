@@ -1,19 +1,12 @@
 package stream
 
-import db._
-import org.apache.spark._
-import org.apache.spark.streaming._
-import org.apache.spark.streaming.kafka010._
-//import org.apache.spark.streaming.kafka010.KafkaUtils
 
-
-import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types._
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.streaming.StreamingQuery
-import org.apache.spark.sql.functions._
+
 
 
 case class KafkaConsumer(topic: String, timewindow: Long) extends Kafka
@@ -122,10 +115,5 @@ object KafkaConsumer {
 
 
 
-  //load function (used later for testing)
-  def loadDF(spark: SparkSession, path: String): DataFrame = {
-    val df = spark.read.option("header", true).option("inferSchema", true).csv(path)
-    df
-  }
 
 }

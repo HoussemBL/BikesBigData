@@ -177,10 +177,6 @@ object Kafka {
     processingTime
   }
 
-  //access the schema used for reading apache logs
-  /*def getschema(): StructType = {
-    Kafka.schemaBikeInfo
-  }*/
 
   //read properties of kafka specified in src.main.resources
   def readKafkaProperties(): Properties = {
