@@ -1,27 +1,19 @@
 package solution
 
 
-import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import akka.stream.ActorMaterializer
 import akka.util.ByteString
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
-
-
-import java.util.Properties
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import solution.LaunchAPI.properties
+import stream.Kafka
 
-import java.util
-import java.util.Map
-import java.util.List
-import scala.collection.immutable.TreeMap
-
-
+import java.util.{List, Properties}
 import scala.collection.JavaConverters._
 
 case class BikeInfo(date_stolen: Long, description: String, frame_colors: List[String], frame_model: String,
@@ -35,47 +27,27 @@ case class BikeInfo(date_stolen: Long, description: String, frame_colors: List[S
 
 case class BikeArray(bikes: java.util.List[BikeInfo])
 
-object RestApiClient {
 
-  val brokers = "localhost:9092"
-  val properties = new Properties()
-  properties.put("bootstrap.servers", brokers)
-  properties.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
-  properties.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+//class used to call to GET requests that should be depending on each other
+//URL1: to search stolen bikes
+//URL2: to get a specific BIKE info based on its id
+//kafka_producer
+class RestApiClient(url1: String, url2: String, kafka_properties: Properties) {
 
-  val producer = new KafkaProducer[String, String](properties)
-
-
-  def main(args: Array[String]): Unit = {
-    implicit val system = ActorSystem()
-    //implicit val materializer = ActorMaterializer()
-    implicit val executionContext = system.dispatcher
-
-
-    while (true) {
-      callSearchBikeEndpoint()
-      Thread.sleep(5 * 60 * 1000) // sleep for 5 minutes
-
-    }
-
-
-  }
-
+  //Kafka_producer
+  val kafka_producer = new KafkaProducer[String, String](kafka_properties)
+  val kafka_topic = kafka_properties.getProperty("kafka_topic")
 
   //call first endpoint about searchingBike
-  def callSearchBikeEndpoint()(implicit executionContext: ExecutionContext,
-                               system: ActorSystem /*, materializer: ActorMaterializer*/) = {
-    // val url = "https://bikeindex.org/api/v3/search?page=1&per_page=1&location=address&stolenness=all"
-    val url = "https://bikeindex.org/api/v3/search?page=1&per_page=60&location=address&stolenness=stolen"
+  def callSearchBikeEndpoint()(implicit executionContext: ExecutionContext, system: ActorSystem) = {
+
+    val url = url1 //"https://bikeindex.org/api/v3/search?page=1&per_page=3&location=address&stolenness=stolen"
     val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = url))
     val gson = new Gson()
     responseFuture
       .onComplete {
         case Success(res) =>
           res.entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
-            val bikes = body.utf8String
-
-
             val mapType = new TypeToken[java.util.HashMap[String, java.util.ArrayList[BikeInfo]]] {}.getType
             val person = Try(gson.fromJson(body.utf8String, mapType).asInstanceOf[java.util.Map[String, java.util.ArrayList[BikeInfo]]])
             person match {
@@ -83,14 +55,14 @@ object RestApiClient {
 
 
                 val list_bikes_id = output.get("bikes").asScala.map(bike => bike.id.toString)
-                //val bike_id = output.get("bikes").get(0).id.toString
+
 
                 //val record = new ProducerRecord[String, String]("searchbikes", bikes)
                 //producer.send(record)
 
                 println(body.utf8String)
                 for (bike_id <- list_bikes_id) {
-                  callEnpointGetBikeById(bike_id)
+                  callEnpointGetBikeById(bike_id, url2)
                 }
               }
               case Failure(e) => {
@@ -105,15 +77,17 @@ object RestApiClient {
       }
   }
 
-  def callEnpointGetBikeById(bike_id: String)(implicit executionContext: ExecutionContext,
-                                              system: ActorSystem) = {
+  //get Bike info given a specified bike_id
+  // url: url of the endpoint
+  def callEnpointGetBikeById(bike_id: String, url: String)(implicit executionContext: ExecutionContext,
+                                                           system: ActorSystem) = {
     //second end point
 
 
-    val url_bikeInfo = "https://bikeindex.org/api/v3/bikes/" + bike_id
+    val url_bikeInfo = /*"https://bikeindex.org/api/v3/bikes/"*/ url + bike_id
 
-    val responseFuture2: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = url_bikeInfo))
-    responseFuture2
+    val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = url_bikeInfo))
+    responseFuture
       .onComplete {
         case Success(res) =>
           res.entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
@@ -121,14 +95,17 @@ object RestApiClient {
             println(bike_id_info)
 
 
-            val record = new ProducerRecord[String, String]("infobikes", bike_id_info)
-            producer.send(record)
+            val record = new ProducerRecord[String, String](kafka_topic, bike_id_info)
+            kafka_producer.send(record)
 
           }
         case Failure(_) => sys.error("something went wrong when searching the bike " + bike_id)
       }
   }
+
 }
+
+
 
 
 

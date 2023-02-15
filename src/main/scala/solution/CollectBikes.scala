@@ -1,17 +1,10 @@
 package solution
 
-import org.apache.spark._
-import org.apache.spark.streaming._
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.types._
+
 import org.apache.spark.sql._
-import org.apache.spark.sql.functions._
 import org.apache.spark.sql.streaming.Trigger
 import stream._
-import db._
 
-import java.util.Properties
-import scala.io.Source
 import Utils.Utils
 
 
