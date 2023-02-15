@@ -32,12 +32,20 @@ import spark.implicits._
       .load()
 
 
-    val df_out = KafkaConsumer.convertStreamToDF(Kafka.schemas,df)(3)
+    val df_out = KafkaConsumer.convertStreamToDF(Kafka.schemas,df)(0)
+
+
+  //just use it for logging
+    //val df_read = KafkaConsumer.print_console_StreamingDF(Kafka.convertTimeToString(kafkaprameters.timewindow),df_out)
 
 
 
-    val df_read = KafkaConsumer.print_console_StreamingDF(Kafka.convertTimeToString(kafkaprameters.timewindow),df_out)
-
+    //write in delta
+    val df_read= df_out.writeStream
+      .trigger(Trigger.ProcessingTime(Kafka.convertTimeToString(kafkaprameters.timewindow)))
+      .outputMode("append")
+      .foreachBatch { (batchDF: DataFrame, batchId: Long) => KafkaConsumer.save_delta(batchDF, batchId) }
+      .start()
 
     //write in cassandra
     /*df_out.writeStream
@@ -53,8 +61,9 @@ import spark.implicits._
       .foreachBatch { (batchDF: DataFrame, batchId: Long) => KafkaConsumer.save_mysql(batchDF, batchId) }
       .start()
 */
-    df_read.awaitTermination()
 
+
+   df_read.awaitTermination()
   }
   
   

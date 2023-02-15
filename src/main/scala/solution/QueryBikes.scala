@@ -18,24 +18,11 @@ object QueryBikes {
   def main(args: Array[String]): Unit = {
 
  val spark:SparkSession = Utils.getSpark()
- 
- val kafkaprameters= Utils.getKafkaParameters()
- 
- 
 
-
-    //reading stream of logs
-    val dfCSV = spark.readStream.option("sep", " ")
-      .option("header", "false")
-      .schema(Kafka.schemaBikeInfo)
-       .csv(kafkaprameters.path_datasource)
-   
-     
-    dfCSV.printSchema()
-    println("test")
-    //writing in kafka topic
-    // KafkaProducer.writelogs_topic(kafkaprameters.topic, kafkaprameters.timewindow,dfCSV)
-    
+    val timeTravelDF_1 = spark.read.format("delta")
+      .option("versionAsOf", 0)
+      .load("file:/home/houssem/delta-bikes/bikes")
+    timeTravelDF_1.show(5, false)
     
     
     
