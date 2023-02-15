@@ -59,9 +59,9 @@ object Kafka {
       .add("rear_gear_type_slug", StringType,nullable = true)
       .add("extra_registration_number", StringType,nullable = true)
       .add("additional_registration", StringType,nullable = true)
-      .add("Stolen_record", StringType,nullable = true)
-      .add("public_images", StringType,nullable = true)
-      .add("components", /*ArrayType(StringType)*/StringType,nullable = true)
+      .add("stolen_record", StringType,nullable = true)
+      .add("public_images", ArrayType(StringType),nullable = true)
+      .add("components", ArrayType(StringType),nullable = true)
 
   final val schemaStolenRecord = new StructType ()
     .add("date_stolen", LongType,nullable = true)
@@ -80,19 +80,15 @@ object Kafka {
 
 
   val schemaImage= new StructType()
-    .add("public_images", ArrayType(
-      new StructType()
     .add("name", StringType,nullable = true)
     .add("full", StringType,nullable = true)
     .add("large", StringType,nullable = true)
-    .add("meduim", StringType,nullable = true)
+    .add("medium", StringType,nullable = true)
     .add("thumb", StringType,nullable = true)
     .add("id", LongType,nullable = true)
-    ))
+
 
   val schemaComponents = new StructType()
-    .add("components", ArrayType(
-        new StructType()
     .add("id", LongType,nullable = true)
     .add("description", StringType,nullable = true)
     .add("serial_number", LongType,nullable = true)
@@ -102,8 +98,8 @@ object Kafka {
     .add("front", StringType,nullable = true)
     .add("manufacturer_name", StringType,nullable = true)
     .add("model_name", StringType,nullable = true)
-    .add("year", IntegerType,nullable = true))
-    )
+    .add("year", IntegerType,nullable = true)
+
 
   final val schemas:List[StructType]= List[StructType](schemaBasic,schemaBike,schemaStolenRecord,schemaImage,schemaComponents)
 
@@ -148,7 +144,7 @@ object Kafka {
           .add("rear_gear_type_slug",StringType)
           .add("extra_registration_number",StringType)
           .add("additional_registration",StringType)
-          .add("Stolen_record",new StructType()
+          .add("stolen_record",new StructType()
             .add("date_stolen",LongType)
             .add("location",StringType)
             .add("latitude", DoubleType)
