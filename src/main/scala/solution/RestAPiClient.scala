@@ -40,6 +40,13 @@ case class BikeArray(bikes: java.util.List[BikeInfo])
 
 object RestApiClient {
 
+  val brokers = "localhost:9092"
+  val properties = new Properties()
+  properties.put("bootstrap.servers", brokers)
+  properties.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+  properties.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer")
+
+  val producer = new KafkaProducer[String, String](properties)
 
 
   def main(args: Array[String]): Unit = {
@@ -50,20 +57,20 @@ object RestApiClient {
 
 
 
-    val url = "https://bikeindex.org/api/v3/search?page=1&per_page=1&location=address&stolenness=all"
-
-    val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = url))
 
 
-    system.scheduler.schedule(0.seconds, 15.seconds) {
-      callSearchBikeEndpoint(responseFuture)
-    }
+    //system.scheduler.schedule(0.seconds, 15.seconds) {
+    while(true) {
+      callSearchBikeEndpoint()
+      Thread.sleep(1 * 30 * 1000) // sleep for 5 minutes
+
+  }
 
 
 
   }
 
-  def sendToKafka(data: String,topic:String): Unit = {
+  /*def sendToKafka(data: String,topic:String): Unit = {
     val brokers = "localhost:9092"
     val properties = new Properties()
     properties.put("bootstrap.servers", brokers)
@@ -75,16 +82,16 @@ object RestApiClient {
     val record = new ProducerRecord[String, String](topic, data)
     producer.send(record)
     producer.close()
-  }
+  }*/
 
 
 
 //call first endpoint about searchingBike
-  def callSearchBikeEndpoint(responseFuture :Future[HttpResponse])(implicit executionContext: ExecutionContext,
+  def callSearchBikeEndpoint()(implicit executionContext: ExecutionContext,
   system : ActorSystem, materializer: ActorMaterializer) = {
-    //implicit val system = ActorSystem()
-  //  implicit val materializer = ActorMaterializer()
-   // implicit val executionContext = system.dispatcher
+    val url = "https://bikeindex.org/api/v3/search?page=1&per_page=1&location=address&stolenness=all"
+
+    val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = url))
     val gson = new Gson()
     responseFuture
       .onComplete {
@@ -99,7 +106,10 @@ object RestApiClient {
               case Success(output) => {
                 val bike_id = output.get("bikes").get(0).id.toString
                 //println(body.utf8String)
-                sendToKafka(bikes, "searchbikes")
+                //sendToKafka(bikes, "searchbikes")
+
+                val record = new ProducerRecord[String, String]("searchbikes", bikes)
+                producer.send(record)
 
                 println(body.utf8String)
                 callEnpointGetBikeById(bike_id)
@@ -129,7 +139,10 @@ object RestApiClient {
           res.entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
             val bike_id_info = body.utf8String
             println(bike_id_info)
-            sendToKafka(bike_id_info, "infobikes")
+           // sendToKafka(bike_id_info, "infobikes")
+
+            val record = new ProducerRecord[String, String]("infobikes", bike_id_info)
+            producer.send(record)
 
           }
         case Failure(_) => sys.error("something went wrong when searching the bike " + bike_id)
