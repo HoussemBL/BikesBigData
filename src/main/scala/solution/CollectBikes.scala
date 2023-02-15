@@ -32,7 +32,7 @@ import spark.implicits._
       .load()
 
 
-    val df_out = KafkaConsumer.convertStreamToDF(Kafka.schemas,df)(2)
+    val df_out = KafkaConsumer.convertStreamToDF(Kafka.schemas,df)(3)
 
 
 

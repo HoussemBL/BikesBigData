@@ -52,11 +52,8 @@ object KafkaConsumer{
         col("front_gear_type_slug"),col("rear_gear_type_slug"),
         col("extra_registration_number"),col("additional_registration"),
         from_json(col("stolen_record"),schemas(2)).as("stolen_record"),
-       //from_json(col("public_images"),schemas(3)).as("public_images"),
        col("public_images"),col("components")
       )
-       //.withColumn( "components2", explode(col("components")))
-      // .withColumn("public_images2",explode(col("public_images")))
        .drop("components")
        .drop("public_images")
 
@@ -86,6 +83,7 @@ object KafkaConsumer{
       )
 */
 
+
     val bikesInfoImagesDF =  bikesInfoDF1
       .select("id","public_images")
       .withColumn("public_images2",explode(col("public_images")))
@@ -98,7 +96,15 @@ object KafkaConsumer{
       .select(col("id"), from_json(col("components2"), schemas(3)).as("components"))
 
 
-    return List(bikesInfoDF2,bikesInfoImagesDF,bikesInfoComponentsDF)
+
+
+
+    val bikesRecordStolenDF = bikesInfoDF2.select("stolen_Record.date_stolen","stolen_Record.location","stolen_Record.latitude",
+      "stolen_Record.longitude","stolen_Record.theft_Description","stolen_Record.locking_description",
+      "stolen_Record.lock_defeat_description","stolen_Record.police_report_number","stolen_Record.police_report_department",
+      "stolen_Record.created_at","stolen_Record.create_open311","stolen_Record.id")
+
+    return List(bikesInfoDF2,bikesInfoImagesDF,bikesInfoComponentsDF,bikesRecordStolenDF)
   }
 
  //query the data stream available as dataframe
