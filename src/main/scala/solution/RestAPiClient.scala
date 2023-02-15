@@ -1,7 +1,6 @@
 package solution
 
 
-
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
@@ -25,12 +24,12 @@ import scala.collection.immutable.TreeMap
 
 import scala.collection.JavaConverters._
 
-case class BikeInfo(date_stolen:Long, description:String, frame_colors:List[String], frame_model:String,
-                    id:Long, is_stock_img :Boolean, large_img: String, location_found:Boolean,
-                    manufacturer_name:String, external_id:Long, registry_name: String,
-                    registry_url:String, serial: String, status:String, stolen:Boolean,
-                    stolen_coordinates :List[Float], stolen_location:String, thumb:String,
-                    title:String, url: String, year: Int
+case class BikeInfo(date_stolen: Long, description: String, frame_colors: List[String], frame_model: String,
+                    id: Long, is_stock_img: Boolean, large_img: String, location_found: Boolean,
+                    manufacturer_name: String, external_id: Long, registry_name: String,
+                    registry_url: String, serial: String, status: String, stolen: Boolean,
+                    stolen_coordinates: List[Float], stolen_location: String, thumb: String,
+                    title: String, url: String, year: Int
                    )
 
 
@@ -53,25 +52,21 @@ object RestApiClient {
     implicit val executionContext = system.dispatcher
 
 
-
-    while(true) {
+    while (true) {
       callSearchBikeEndpoint()
       Thread.sleep(5 * 60 * 1000) // sleep for 5 minutes
 
+    }
+
+
   }
 
 
-
-  }
-
-
-
-
-//call first endpoint about searchingBike
+  //call first endpoint about searchingBike
   def callSearchBikeEndpoint()(implicit executionContext: ExecutionContext,
-  system : ActorSystem/*, materializer: ActorMaterializer*/) = {
-   // val url = "https://bikeindex.org/api/v3/search?page=1&per_page=1&location=address&stolenness=all"
-    val url ="https://bikeindex.org/api/v3/search?page=1&per_page=60&location=address&stolenness=stolen"
+                               system: ActorSystem /*, materializer: ActorMaterializer*/) = {
+    // val url = "https://bikeindex.org/api/v3/search?page=1&per_page=1&location=address&stolenness=all"
+    val url = "https://bikeindex.org/api/v3/search?page=1&per_page=60&location=address&stolenness=stolen"
     val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = url))
     val gson = new Gson()
     responseFuture
@@ -87,15 +82,16 @@ object RestApiClient {
               case Success(output) => {
 
 
-                val list_bikes_id = output.get("bikes").asScala.map(bike=>bike.id.toString)
+                val list_bikes_id = output.get("bikes").asScala.map(bike => bike.id.toString)
                 //val bike_id = output.get("bikes").get(0).id.toString
 
                 //val record = new ProducerRecord[String, String]("searchbikes", bikes)
                 //producer.send(record)
 
                 println(body.utf8String)
-                for (bike_id <- list_bikes_id)
-                  {callEnpointGetBikeById(bike_id)}
+                for (bike_id <- list_bikes_id) {
+                  callEnpointGetBikeById(bike_id)
+                }
               }
               case Failure(e) => {
                 println(s"Error occurred: ${e.getMessage}")
@@ -108,6 +104,7 @@ object RestApiClient {
         case Failure(_) => sys.error("something went wrong")
       }
   }
+
   def callEnpointGetBikeById(bike_id: String)(implicit executionContext: ExecutionContext,
                                               system: ActorSystem) = {
     //second end point

@@ -8,21 +8,19 @@ import Utils.Utils
 object QueryBikes {
   def main(args: Array[String]): Unit = {
 
- val spark:SparkSession = Utils.getSpark()
+    val spark: SparkSession = Utils.getSpark()
 
 
-
-
-   //retrieve history
-   val deltaTable = DeltaTable.forPath(spark, "file:/home/houssem/delta-bikes/bikes")
+    //retrieve history
+    val deltaTable = DeltaTable.forPath(spark, "file:/home/houssem/delta-bikes/bikes")
 
     val fullHistoryDF = deltaTable.history() // get the full history of the table
 
-    fullHistoryDF.show(fullHistoryDF.count().toInt,false)
+    fullHistoryDF.show(fullHistoryDF.count().toInt, false)
 
 
     val lastOperationDF = deltaTable.history(1)
-    lastOperationDF.show(fullHistoryDF.count().toInt,false)
+    lastOperationDF.show(fullHistoryDF.count().toInt, false)
 
     //check content of first dataframe
     val timeTravelDF_0 = spark.read.format("delta")
@@ -31,37 +29,49 @@ object QueryBikes {
     timeTravelDF_0.show(5, false)
 
 
+
     //check content of last dataframe
     val timeTravelDF_1 = spark.read.format("delta")
-      .option("versionAsOf", 4)
+      .option("versionAsOf", 1)
       .load("file:/home/houssem/delta-bikes/bikes")
     timeTravelDF_1.show(5, false)
-   
-  print("end")
+
+    timeTravelDF_1 .except(timeTravelDF_0).show(false)
 
 
-  
- //query delta
-val df=spark.read.format("delta")
-  .load("file:/home/houssem/delta-bikes/bikes")
+    val df_diff = spark.read.format("delta")
+      .option("readChangeFeed", "true")
+      .option("startingVersion", 0)
+      .option("endingVersion",14)
+      //.table("myDeltaTable")
+      .load("file:/home/houssem/delta-bikes/bikes")
 
-  val numberofStolenBikes= df
-    .count()
-    println ("numberofStolenBikes " + numberofStolenBikes)
+    df_diff.printSchema()
+    df_diff.show(false)
+    print("end")
+
+
+    //query delta
+    val df = spark.read.format("delta")
+      .load("file:/home/houssem/delta-bikes/bikes")
+
+    val numberofStolenBikes = df
+      .count()
+    println("numberofStolenBikes " + numberofStolenBikes)
 
     df.groupBy("type_of_cycle").count().show()
-/*
-* +-------------+-----+
-|type_of_cycle|count|
-+-------------+-----+
-|         Bike|   28|
-| E-skateboard|    1|
-|     Tricycle|    1|
-|    Recumbent|    2|
-+-------------+-----+
-* */
+    /*
+    * +-------------+-----+
+    |type_of_cycle|count|
+    +-------------+-----+
+    |         Bike|   28|
+    | E-skateboard|    1|
+    |     Tricycle|    1|
+    |    Recumbent|    2|
+    +-------------+-----+
+    * */
 
-   df.groupBy("year").count().show()
+    df.groupBy("year").count().show()
   }
 
 }
