@@ -1,5 +1,6 @@
 package stream
-import org.apache.spark.sql.types._
+import org.apache.spark.sql.types.{StructType, _}
+
 import java.util.Properties
 import scala.io.Source
 
@@ -15,7 +16,7 @@ object Kafka {
   //schema used to read/write logs in kafka topics
 
 
-  final val schema0 = new StructType()
+  final val schemaBasic = new StructType()
     .add("bike", StringType, true)
 
   final val schemaBike = new StructType()
@@ -60,10 +61,51 @@ object Kafka {
       .add("additional_registration", StringType,nullable = true)
       .add("Stolen_record", StringType,nullable = true)
       .add("public_images", StringType,nullable = true)
-      .add("components", ArrayType(StringType),nullable = true)
+      .add("components", /*ArrayType(StringType)*/StringType,nullable = true)
+
+  final val schemaStolenRecord = new StructType ()
+    .add("date_stolen", LongType,nullable = true)
+    .add("location", StringType,nullable = true)
+    .add("latitude", DoubleType,nullable = true)
+    .add("longitude", DoubleType,nullable = true)
+    .add("theft_Description", StringType,nullable = true)
+    .add("locking_description", StringType,nullable = true)
+    .add("lock_defeat_description", StringType,nullable = true)
+    .add("police_report_number", StringType,nullable = true)
+    .add("police_report_department", StringType,nullable = true)
+    .add("created_at", LongType,nullable = true)
+    .add("create_open311", BooleanType,nullable = true)
+    .add("id", LongType,nullable = true)
 
 
-  final val schemas:List[StructType]= List[StructType](schema0,schemaBike)
+
+  val schemaImage= new StructType()
+    .add("public_images", ArrayType(
+      new StructType()
+    .add("name", StringType,nullable = true)
+    .add("full", StringType,nullable = true)
+    .add("large", StringType,nullable = true)
+    .add("meduim", StringType,nullable = true)
+    .add("thumb", StringType,nullable = true)
+    .add("id", LongType,nullable = true)
+    ))
+
+  val schemaComponents = new StructType()
+    .add("components", ArrayType(
+        new StructType()
+    .add("id", LongType,nullable = true)
+    .add("description", StringType,nullable = true)
+    .add("serial_number", LongType,nullable = true)
+    .add("component_type", StringType,nullable = true)
+    .add("component_group", StringType,nullable = true)
+    .add("rear", StringType,nullable = true)
+    .add("front", StringType,nullable = true)
+    .add("manufacturer_name", StringType,nullable = true)
+    .add("model_name", StringType,nullable = true)
+    .add("year", IntegerType,nullable = true))
+    )
+
+  final val schemas:List[StructType]= List[StructType](schemaBasic,schemaBike,schemaStolenRecord,schemaImage,schemaComponents)
 
   final val schemaBikeInfo = new StructType()
         .add("bike", ArrayType(new StructType()

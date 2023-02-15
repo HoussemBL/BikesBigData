@@ -71,7 +71,7 @@ object RestApiClient {
   def callSearchBikeEndpoint()(implicit executionContext: ExecutionContext,
   system : ActorSystem/*, materializer: ActorMaterializer*/) = {
    // val url = "https://bikeindex.org/api/v3/search?page=1&per_page=1&location=address&stolenness=all"
-    val url ="https://bikeindex.org/api/v3/search?page=1&per_page=20&location=address&stolenness=stolen"
+    val url ="https://bikeindex.org/api/v3/search?page=1&per_page=60&location=address&stolenness=stolen"
     val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = url))
     val gson = new Gson()
     responseFuture

@@ -30,16 +30,37 @@ object KafkaConsumer{
     val bikesInfoRawDF = df_st.selectExpr("CAST(value AS STRING)")
     val bikesInfoDF = bikesInfoRawDF.select(from_json(col("value"), schemas(0)).as("data"))
     .select("data.*")
-     .select(from_json(col("bike"),schemas(1)).as("data"))
-      .select("data.*")
-
-
-
- //     .select(explode(col("bike")).as("col"))
-   //   .select("col.date_stolen","col.description")
     bikesInfoDF.printSchema()
+    val bikesInfoDF1 =  bikesInfoDF .select(from_json(col("bike"),schemas(1)).as("data"))
+      .select("data.*")
+    bikesInfoDF1.printSchema()
 
-    return bikesInfoDF
+
+     //new part
+     val bikesInfoDF2 =  bikesInfoDF1.select(col("date_stolen"),col("description"),col("frame_colors"),
+        col("frame_model"),col("id"),col("is_stock_img"),
+        col("large_img"),col("location_found"),col("manufacturer_name"),
+        col("external_id"),col("registry_url"),col("serial"),
+        col("status"),col("stolen"),col("stolen_coordinates"),
+        col("stolen_location"),col("thumb"),col("title"),
+        col("url"),col("year"),col("registration_created_at"),
+        col("registration_updated_at"),col("api_url"),
+        col("manufacturer_id"),col("paint_description"),col("name"),col("frame_size"),col("rear_tire_narrow"),col("front_tire_narrow"),
+        col("type_of_cycle"),col("test_bike"),
+        col("rear_wheel_size_iso_bsd"), col("front_wheel_size_iso_bsd"),
+        col("handlebar_type_slug"), col("frame_material_slug"),
+        col("front_gear_type_slug"),col("rear_gear_type_slug"),
+        col("extra_registration_number"),col("additional_registration"),
+        from_json(col("Stolen_record"),schemas(2)).as("stolen_record"),
+        from_json(col("public_images"),schemas(3)).as("public_images"),
+        from_json(col("components"),schemas(4)).as("components")
+        //explode(col("components").as("components"))
+      )
+
+    //val tt =bikesInfoDF.schema.map(x=>"col("+x.name+")").mkString(",")
+    bikesInfoDF2.printSchema()
+
+    return bikesInfoDF1
   }
 
  //query the data stream available as dataframe
