@@ -19,8 +19,8 @@ object CollectBikes {
     //consuming Kafka topic
     val df = spark.readStream
       .format("kafka")
-      .option("kafka.bootstrap.servers", /*kafkaprameters.url*/ "localhost:9092")
-      .option("subscribe", /*kafkaprameters.topic*/ "infobikes")
+      .option("kafka.bootstrap.servers", kafkaprameters.url/*"localhost:9092"*/ )
+      .option("subscribe", kafkaprameters.topic)
       .option("startingOffsets", "earliest") // From starting
       .load()
 
@@ -32,26 +32,7 @@ object CollectBikes {
 
 
     //write in delta
-    val df_read = df_bikes.writeStream
-      .trigger(Trigger.ProcessingTime(Kafka.convertTimeToString(kafkaprameters.timewindow)))
-      .outputMode("append")
-      .foreachBatch { (batchDF: DataFrame, batchId: Long) =>
-        KafkaConsumer.save_delta(batchDF
-          /*.withColumn("url",
-          concat(col("url"),lit(("_Houssem"))))*/
-          /*.drop("stolen_record","public_images","components")*/
-            , batchId, /*"file:/home/houssem/delta-bikes/bikes"*/"bikes")
-
-        val dfStolenRecord = KafkaConsumer.extractRecordStolenDimensionTable(Kafka.schemas, batchDF)
-        val dfComponents = KafkaConsumer.extractComponentsDimensionTable(Kafka.schemas, batchDF)
-        val dfImages = KafkaConsumer.extractImagesDimensionTable(Kafka.schemas, batchDF)
-
-        KafkaConsumer.save_delta(dfStolenRecord, batchId,"stolenRecord" /*"file:/home/houssem/delta-bikes/stolen-record"*/)
-        KafkaConsumer.save_delta(dfComponents, batchId, "components" /*"file:/home/houssem/delta-bikes/components"*/)
-        KafkaConsumer.save_delta(dfImages, batchId, "images"/*"file:/home/houssem/delta-bikes/images"*/)
-      }
-      .start()
-
+    val df_read = KafkaConsumer.persistStreamDF(df_bikes,kafkaprameters.timewindow)
 
 
     df_read.awaitTermination()

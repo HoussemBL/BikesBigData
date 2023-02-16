@@ -1,4 +1,4 @@
-package solution
+package analytics
 
 import Utils.Utils
 import io.delta.tables._

@@ -1,9 +1,8 @@
-package solution
+package analytics
 
-
-import org.apache.spark.sql.SparkSession
-import io.delta.tables._
 import Utils.Utils
+import io.delta.tables._
+import org.apache.spark.sql.SparkSession
 
 object QueryBikes {
   def main(args: Array[String]): Unit = {

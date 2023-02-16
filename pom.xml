@@ -217,5 +217,14 @@
 		  <scope>test</scope>
 	  </dependency>
 
+
+	  <!-- https://mvnrepository.com/artifact/org.scalatest/scalatest-funsuite -->
+	  <dependency>
+		  <groupId>org.scalatest</groupId>
+		  <artifactId>scalatest-funsuite_2.11</artifactId>
+		  <version>3.0.0-SNAP13</version>
+		  <scope>test</scope>
+	  </dependency>
+
   </dependencies>
 </project>

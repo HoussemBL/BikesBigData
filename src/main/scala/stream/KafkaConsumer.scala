@@ -8,17 +8,38 @@ import org.apache.spark.sql.streaming.Trigger
 import org.apache.spark.sql.streaming.StreamingQuery
 
 
-
 case class KafkaConsumer(topic: String, timewindow: Long) extends Kafka
 
 
 //companion object  
 object KafkaConsumer {
 
+  //save all data that we read from the stream of bik
+  def persistStreamDF(df_bikes: DataFrame,timewindowInSeconds: Long):StreamingQuery = {
+    df_bikes.writeStream
+      .trigger(Trigger.ProcessingTime(Kafka.convertTimeToString(timewindowInSeconds)))
+      .outputMode("append")
+      .foreachBatch { (batchDF: DataFrame, batchId: Long) =>
+        KafkaConsumer.save_delta(batchDF
+          /*.withColumn("url",
+          concat(col("url"),lit(("_Houssem"))))*/
+          /*.drop("stolen_record","public_images","components")*/
+          , batchId, /*"file:/home/houssem/delta-bikes/bikes"*/ "bikes")
+
+        val dfStolenRecord = KafkaConsumer.extractRecordStolenDimensionTable(Kafka.schemas, batchDF)
+        val dfComponents = KafkaConsumer.extractComponentsDimensionTable(Kafka.schemas, batchDF)
+        val dfImages = KafkaConsumer.extractImagesDimensionTable(Kafka.schemas, batchDF)
+
+        KafkaConsumer.save_delta(dfStolenRecord, batchId, "stolenRecord")
+        KafkaConsumer.save_delta(dfComponents, batchId, "components")
+        KafkaConsumer.save_delta(dfImages, batchId, "images")
+      }
+      .start()
+  }
+
+
   // transform the data consumed from a kafka topic to a dataframe  using the specified schema
   def convertStreamToDF(schemas: List[StructType], df_st: DataFrame): DataFrame = {
-
-
     val bikesStreamDF = df_st.selectExpr("CAST(value AS STRING)")
     val bikesInfoDF = bikesStreamDF.select(from_json(col("value"), schemas(0)).as("data"))
       .select("data.*")
@@ -26,42 +47,12 @@ object KafkaConsumer {
     val rawBikesDF1 = bikesInfoDF.select(from_json(col("bike"), schemas(1)).as("data"))
       .select("data.*")
 
-    rawBikesDF1.printSchema()
-
-
-    //apply this part if you want to drop some columns
-    /*   val bikesInfoDF2 =  rawBikesDF1.select(col("date_stolen"),col("description"),col("frame_colors"),
-          col("frame_model"),col("id"),col("is_stock_img"),
-          col("large_img"),col("location_found"),col("manufacturer_name"),
-          col("external_id"),col("registry_url"),col("serial"),
-          col("status"),col("stolen"),col("stolen_coordinates"),
-          col("stolen_location"),col("thumb"),col("title"),
-          col("url"),col("year"),col("registration_created_at"),
-          col("registration_updated_at"),col("api_url"),
-          col("manufacturer_id"),col("paint_description"),col("name"),col("frame_size"),col("rear_tire_narrow"),col("front_tire_narrow"),
-          col("type_of_cycle"),col("test_bike"),
-          col("rear_wheel_size_iso_bsd"), col("front_wheel_size_iso_bsd"),
-          col("handlebar_type_slug"), col("frame_material_slug"),
-          col("front_gear_type_slug"),col("rear_gear_type_slug"),
-          col("extra_registration_number"),col("additional_registration")
-         ,col("stolen_record"),col("public_images"),col("components")
-        )
-
-
-
-
-
-      bikesInfoDF2.printSchema()
-
-
-      //return List(bikesInfoDF2,bikesInfoImagesDF,bikesInfoComponentsDF,bikesRecordStolenDF)
-      return bikesInfoDF2*/
-    return rawBikesDF1
+    //rawBikesDF1.printSchema()
+    rawBikesDF1
   }
 
 
   def extractImagesDimensionTable(schemas: List[StructType], df_source: DataFrame) = {
-
     val bikesInfoImagesDF = df_source
       .select("id", "public_images")
       .withColumn("public_images2", explode(col("public_images")))
@@ -105,15 +96,13 @@ object KafkaConsumer {
       .withColumn("batch_id", lit(batchId))
       .write
       .format("delta")
-      .mode(/*"overwrite"*/"append")
+      .mode("append")
       .option("overwriteSchema", "true")
       .option("delta.enableChangeDataFeed", "true")
       //.save(path)
       .saveAsTable(path)
-      //.insertInto(path)
+
   }
-
-
 
 
 }
