@@ -6,6 +6,7 @@ import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
 import stream.Kafka
 
 import scala.concurrent.{Await, Future}
+import scala.util.Try
 
 class RestAPIClientTestSuite2 extends AnyFunSuite {
   implicit val system = ActorSystem()
@@ -25,29 +26,39 @@ class RestAPIClientTestSuite2 extends AnyFunSuite {
 
 
     assertThrows[akka.http.scaladsl.model.IllegalUriException] {
-      restAPIClient.callSearchBikeEndpoint()
+      restAPIClient.generalCall()
     }
   }
 
-    test("An empty url2") {
-      val properties = Kafka.readKafkaProperties()
-      // val url1 = "x"
-      val url11 = "https://bikeindex.org/api/v3/search?page=1&per_page=3&location=address&stolenness=stolen"
-      val url22 = ""
-      val restAPIClient1 = new RestApiClient(url11, url22, properties)
-
-      restAPIClient1.callSearchBikeEndpoint()
-      assertThrows[java.lang.IllegalArgumentException] {
-        //throw new java.lang.IllegalArgumentException("url2 is wrong")
-        restAPIClient1.callSearchBikeEndpoint()
-      }
-
-    }
 
 
 
+  test("an empty url2") {
+    val properties = Kafka.readKafkaProperties()
+    // val url1 = "x"
+    val url11 = "https://bikeindex.org/api/v3/search?page=1&per_page=3&location=address&stolenness=stolen"
+    val url22 = ""
+    val restAPIClient1 = new RestApiClient(url11, url22, properties)
+    val futureResult: Future[Try[Int]]=    restAPIClient1.generalCall()
 
-  //test wrong url
+    val result: Try[Int] = Await.result(futureResult, 5.seconds)
+
+    assert(result.isFailure)
+  }
+
+
+  test("an empty url1") {
+    val properties = Kafka.readKafkaProperties()
+    // val url1 = "x"
+    val url11 = ""
+    val url22 = "https://bikeindex.org/api/v3/bikes/"
+    val restAPIClient1 = new RestApiClient(url11, url22, properties)
+    val futureResult: Future[Try[Int]] = restAPIClient1.generalCall()
+
+    val result: Try[Int] = Await.result(futureResult, 5.seconds)
+
+    assert(result.isFailure)
+  }
 
 
   //test wrong kafka params

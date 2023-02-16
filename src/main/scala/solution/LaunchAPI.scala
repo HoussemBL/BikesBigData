@@ -9,7 +9,7 @@ object LaunchAPI {
   private val url1 = "https://bikeindex.org/api/v3/search?page=1&per_page=3&location=address&stolenness=stolen"
  private val  url2 = "https://bikeindex.org/api/v3/bikes/"
 
-  //private val  url2 = ""
+
 
   private val restAPIClient = new RestApiClient(url1,url2,properties)
 
@@ -19,8 +19,8 @@ object LaunchAPI {
 
 
     while (true) {
-      restAPIClient.callSearchBikeEndpoint()
-      Thread.sleep(1 * 60 * 1000) // sleep for 5 minutes
+      restAPIClient.generalCall()
+      Thread.sleep(1 * 6 * 1000) // sleep for 5 minutes
 
     }
 
