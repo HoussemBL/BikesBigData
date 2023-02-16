@@ -38,57 +38,28 @@ class RestApiClient(url1: String, url2: String, kafka_properties: Properties)
 
   //call first endpoint about searchingBike
   @throws(classOf[Exception])
- @throws(classOf[IllegalArgumentException])
- override def callSearchBikeEndpoint()(implicit executionContext: ExecutionContext, system: ActorSystem): Unit = {
+  @throws(classOf[IllegalArgumentException])
+  override def callSearchBikeEndpoint()(implicit executionContext: ExecutionContext, system: ActorSystem): Unit = {
 
 
     val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = url1))
     val gson = new Gson()
 
-    val recoveredFuture: Future[HttpResponse] = responseFuture.recover {
-      case _: Exception =>
-        throw new java.lang.IllegalArgumentException("url1 is wrong")
-    }
-
-    recoveredFuture
-      .onComplete {
-        case Success(res) =>
-          res.entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
-            val mapType = new TypeToken[java.util.HashMap[String, java.util.ArrayList[BikeInfo]]] {}.getType
-            val bikeResult = Try(gson.fromJson(body.utf8String, mapType).asInstanceOf[java.util.Map[String, java.util.ArrayList[BikeInfo]]])
-            bikeResult match {
-              case Success(output) => {
-
-
-                val list_bikes_id = output.get("bikes").asScala.map(bike => bike.id.toString)
-
-
-
-                println(body.utf8String)
-                for (bike_id <- list_bikes_id) {
-                  callEndpointGetBikeById(bike_id, url2) match {
-                    case Failure(_) => throw new java.lang.IllegalArgumentException("url2 is wrong")
-                  }
-                }
-              }
-
-
-              case Failure(_) =>
-                //println(s"Error occurred: ${e.getMessage}")
-                throw new java.lang.IllegalArgumentException("url2 is wrong")
-
-
-            }
-
-          }
-
-
-        case Failure(_) => throw new java.lang.IllegalArgumentException("url1 is wrong") //sys.error("something went wrong")
-
+    responseFuture.flatMap { res =>
+      res.entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
+        val mapType = new TypeToken[java.util.HashMap[String, java.util.ArrayList[BikeInfo]]] {}.getType
+        val bikeResult = gson.fromJson(body.utf8String, mapType).asInstanceOf[java.util.Map[String, java.util.ArrayList[BikeInfo]]]
+        val list_bikes_id = bikeResult.get("bikes").asScala.map(bike => bike.id.toString)
+        list_bikes_id.map { bike_id =>
+          callEndpointGetBikeById(bike_id, url2)
+        }
       }
-
-
+    }.recoverWith { case e: Exception =>
+      println(s"Something went wrong, ${e.getMessage}")
+      throw new java.lang.IllegalArgumentException("url1 is wrong")
+    }
   }
+
 
   @throws(classOf[Exception])
   @throws(classOf[IllegalArgumentException])
@@ -96,7 +67,7 @@ class RestApiClient(url1: String, url2: String, kafka_properties: Properties)
                                                                      system: ActorSystem): Try[Int] = {
     //second end point
 
-   var res:Try[Int]=Success(1);
+    var res: Try[Int] = Success(1);
     val url_bikeInfo = url + bike_id
 
     val responseFuture: Future[HttpResponse] = Http().singleRequest(HttpRequest(uri = url_bikeInfo))
@@ -107,7 +78,7 @@ class RestApiClient(url1: String, url2: String, kafka_properties: Properties)
         return Failure(new java.lang.IllegalArgumentException("url2 is wrong"))
     }
 
-     recoveredFuture
+    recoveredFuture
       .onComplete {
         case Success(res) =>
           res.entity.dataBytes.runFold(ByteString(""))(_ ++ _).map { body =>
@@ -121,10 +92,10 @@ class RestApiClient(url1: String, url2: String, kafka_properties: Properties)
         case Failure(_) =>
 
           //throw new java.lang.IllegalArgumentException("url2 is wrong")
-         res= Failure(new java.lang.IllegalArgumentException("url2 is wrong"))
+          res = Failure(new java.lang.IllegalArgumentException("url2 is wrong"))
 
       }
-      res
+    res
   }
 
 }
