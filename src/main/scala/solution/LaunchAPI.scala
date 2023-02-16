@@ -6,7 +6,7 @@ import stream.Kafka
 
 object LaunchAPI {
   private val properties = Kafka.readKafkaProperties()
-  private val url1 = "https://bikeindex.org/api/v3/search?page=1&per_page=3&location=address&stolenness=stolen"
+  private val url1 = "https://bikeindex.org/api/v3/search?page=1&per_page=30&location=address&stolenness=stolen"
  private val  url2 = "https://bikeindex.org/api/v3/bikes/"
 
 
@@ -20,7 +20,7 @@ object LaunchAPI {
 
     while (true) {
       restAPIClient.generalCall()
-      Thread.sleep(1 * 6 * 1000) // sleep for 5 minutes
+      Thread.sleep(1 * 60 * 1000) // sleep for 5 minutes
 
     }
 
