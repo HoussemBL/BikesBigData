@@ -34,9 +34,10 @@ class KafkaConsumerTestSuite extends AnyFunSuite with BeforeAndAfter {
 
 
   var spark: SparkSession = _
-
+  var kafkaConsumer: KafkaConsumer = _
   before {
     spark = Utils.getSpark()
+    kafkaConsumer = KafkaConsumer("topic", 60, "kafka_Server")
   }
 
   after {
@@ -47,7 +48,7 @@ class KafkaConsumerTestSuite extends AnyFunSuite with BeforeAndAfter {
 
   test("test convert stream to dataframe") {
     val df = createSyntheticStreamData()
-    val actual = KafkaConsumer.convertStreamToDF(Kafka.schemas, df)
+    val actual = kafkaConsumer.convertStreamToDF(Kafka.schemas, df)
 
     //check the structure of dataframe is correct
     assert(actual.schema.fields.length == 42)
@@ -56,7 +57,7 @@ class KafkaConsumerTestSuite extends AnyFunSuite with BeforeAndAfter {
 
   test("test extraction of stolen record") {
     val df = createSyntheticBikeData()
-    val actual = KafkaConsumer.extractRecordStolenDimensionTable(Kafka.schemas,df)
+    val actual = kafkaConsumer.extractRecordStolenDimensionTable(Kafka.schemas,df)
 
     //check the structure of dataframe is correct
     assert(actual.schema.fields.length == 12)

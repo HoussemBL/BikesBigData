@@ -57,7 +57,6 @@ object QueryHistoryBikes {
       .option("readChangeFeed", "true")
       .option("startingVersion", 0)
       .option("endingVersion", 1)
-      //.table("myDeltaTable")
       .load("file:/home/houssem/scala-workspace/BikesBigData/spark-warehouse/bikes")
 
     df_diff.printSchema()
