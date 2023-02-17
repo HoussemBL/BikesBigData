@@ -3,6 +3,7 @@ package API
 import akka.actor.ActorSystem
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
+import solution.CallAPI.properties
 import stream.Kafka
 
 import scala.concurrent.{Await, Future}
@@ -88,18 +89,18 @@ class RestAPIClientTestSuite extends AnyFunSuite {
   }
 
 
- /* test("wrong kafka info") {
+  test("wrong kafka  server info") {
     val properties = Kafka.readKafkaProperties()
     val url11 = "https://bikeindex.org/api/v3/search?page=1&per_page=3&location=address&stolenness=stolen"
     val url22 = "https://bikeindex.org/api/v3/bikes/"
-    properties.setProperty("kafka_topic","wrong")
+    properties.setProperty("bootstrap.servers","testast")
     val restAPIClient1 = new RestApiClient(url11, url22,properties )
-    val futureResult: Future[Try[Int]] = restAPIClient1.generalCall()
+    val futureResult: Future[Try[Int]] = restAPIClient1.callAPI()
 
     val result: Try[Int] = Await.result(futureResult, 5.seconds)
 
     assert(result.isFailure)
-  }*/
+  }
 
 
 

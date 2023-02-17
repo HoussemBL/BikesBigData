@@ -33,9 +33,9 @@ case class KafkaConsumer(topic: String, timeWindowInSec: Long, kafka_Server:Stri
 
      spark.readStream
        .format("kafka")
-       .option("kafka.bootstrap.servers", kafka_Server/*"localhost:9092"*/)
+       .option("kafka.bootstrap.servers", kafka_Server)
        .option("subscribe", topic)
-       .option("startingOffsets", "earliest") // From starting
+       .option("startingOffsets", "earliest")
        .load()
    }
 

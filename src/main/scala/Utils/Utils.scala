@@ -31,10 +31,9 @@ object Utils {
     val Kafka_parameters = Kafka.readKafkaProperties()
     val kafka_topic = Kafka_parameters.getProperty("kafka_topic")
     val timewindow = Kafka_parameters.getProperty("timewindow").toLong
-    val url = Kafka_parameters.getProperty("url")
+    val url = Kafka_parameters.getProperty("bootstrap.servers")
 
 
-    //println("path used to produce kafka --> "+ path_datasource)
     println("Name of the kafka topic --> " + kafka_topic)
     println("Interval of batch in seconds --> " + timewindow)
     Thread.sleep(3000)

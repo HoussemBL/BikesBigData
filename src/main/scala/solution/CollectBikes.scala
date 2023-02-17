@@ -8,10 +8,9 @@ import Utils.Utils
 object CollectBikes {
   def main(args: Array[String]): Unit = {
 
-
     val kafkaParameters = Utils.getKafkaParameters()
+    val kafkaConsumer = KafkaConsumer(kafkaParameters.topic, kafkaParameters.timewindow, kafkaParameters.url)
 
-   val kafkaConsumer= KafkaConsumer(kafkaParameters.topic,kafkaParameters.timewindow,kafkaParameters.url)
 
     //consuming Kafka topic
     val df = kafkaConsumer.readRawStream()

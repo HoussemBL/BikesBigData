@@ -6,7 +6,7 @@ import stream.Kafka
 
 object CallAPI {
   private val properties = Kafka.readKafkaProperties()
-  private val url1 = "sssss"//"https://bikeindex.org/api/v3/search?page=1&per_page=30&location=address&stolenness=stolen"
+  private val url1 = "https://bikeindex.org/api/v3/search?page=1&per_page=100&location=address&stolenness=stolen"
   private val url2 = "https://bikeindex.org/api/v3/bikes/"
 
 
