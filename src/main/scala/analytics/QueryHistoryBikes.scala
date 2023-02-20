@@ -15,6 +15,7 @@ object QueryHistoryBikes {
 
     // Redirecting the standard output to a file
     val consoleOutputFile = new File("/home/houssem/scala-workspace/BikesBigData/src/main/resources/output/file.txt")//+time.LocalDateTime.now().toString+".txt")
+    //consoleOutputFile.createNewFile() //file creation
     val fileOutputStream = new FileOutputStream(consoleOutputFile)
     val printStream = new PrintStream(fileOutputStream)
     Console.withOut(printStream) {
@@ -42,11 +43,12 @@ object QueryHistoryBikes {
       //update data
       deltaTable.update( // predicate using Spark SQL functions and implicits
         col("id") === bike_id_to_update,
-        Map("frame_model" -> lit("click2")))
+        Map("frame_model" -> lit("test")))
 
       //check the history of transformations
       println("history dataframe")
-      fullHistoryDF.show(false)
+      val fullHistoryDF2 = deltaTable.history()
+      fullHistoryDF2.show(false)
 
 
       //val lastOperationDF = deltaTable.history(1)
