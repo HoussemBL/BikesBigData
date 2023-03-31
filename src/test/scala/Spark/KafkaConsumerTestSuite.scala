@@ -6,7 +6,11 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.{BeforeAndAfter}
 import stream.{Kafka, KafkaConsumer}
+import org.junit.runner.RunWith
+import org.specs2.runner.JUnitRunner
 
+
+@RunWith(classOf[JUnitRunner])
 class KafkaConsumerTestSuite extends AnyFunSuite with BeforeAndAfter {
 //path of bikes json persisted locally
   val pathJsonFiles = getClass.getResource("/data").getPath
