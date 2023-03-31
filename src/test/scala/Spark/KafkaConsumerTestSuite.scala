@@ -63,7 +63,7 @@ class KafkaConsumerTestSuite extends AnyFunSuite with BeforeAndAfter {
     assert(actual.schema.fields.length == 12)
 
     //check that dataframe contains as expected 3 records
-    assert(actual.count() == 30)
+    assert(actual.count() == 3)
   }
 
 
